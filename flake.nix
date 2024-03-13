@@ -1,5 +1,6 @@
 {
   nixConfig.extra-substituters = [
+    "https://wrpc.cachix.org"
     "https://wasmcloud.cachix.org"
     "https://nixify.cachix.org"
     "https://crane.cachix.org"
@@ -8,6 +9,7 @@
     "https://cache.garnix.io"
   ];
   nixConfig.extra-trusted-public-keys = [
+    "wrpc.cachix.org-1:J1xnzWo1nnhlzOmZCA10/5wz87LwCFwQtnqCibCy67w="
     "wasmcloud.cachix.org-1:9gRBzsKh+x2HbVVspreFg/6iFRiD4aOcUQfXVDl3hiM="
     "nixify.cachix.org-1:95SiUQuf8Ij0hwDweALJsLtnMyv/otZamWNRp1Q1pXw="
     "crane.cachix.org-1:8Scfpmn9w+hGdXH/Q9tTLiYAE/2dnJYRJP7kl80GuRk="
@@ -20,7 +22,7 @@
   inputs.nixify.url = "github:rvolosatovs/nixify";
   inputs.nixlib.url = "github:nix-community/nixpkgs.lib";
   inputs.wasmcloud-component-adapters.inputs.nixify.follows = "nixify";
-  inputs.wasmcloud-component-adapters.url = "github:wasmCloud/wasmcloud-component-adapters/v0.7.0";
+  inputs.wasmcloud-component-adapters.url = "github:wasmCloud/wasmcloud-component-adapters/v0.8.0";
   inputs.wit-deps.inputs.nixify.follows = "nixify";
   inputs.wit-deps.inputs.nixlib.follows = "nixlib";
   inputs.wit-deps.url = "github:bytecodealliance/wit-deps/v0.3.5";
@@ -106,6 +108,81 @@
                   pkgs.nats-server
                 ];
             };
+
+        withPackages = {
+          hostRustToolchain,
+          packages,
+          pkgs,
+          ...
+        }: let
+          interpreters.aarch64-unknown-linux-gnu = "/lib/ld-linux-aarch64.so.1";
+          interpreters.riscv64gc-unknown-linux-gnu = "/lib/ld-linux-riscv64-lp64d.so.1";
+          interpreters.x86_64-unknown-linux-gnu = "/lib64/ld-linux-x86-64.so.2";
+
+          mkFHS = {
+            name,
+            src,
+            interpreter,
+          }:
+            pkgs.stdenv.mkDerivation {
+              inherit
+                name
+                src
+                ;
+
+              buildInputs = [
+                pkgs.patchelf
+              ];
+
+              dontBuild = true;
+              dontFixup = true;
+
+              installPhase = ''
+                runHook preInstall
+
+                for p in $(find . -type f); do
+                  # https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header
+                  if head -c 4 $p | grep $'\x7FELF' > /dev/null; then
+                    patchelf --set-rpath /lib $p || true
+                    patchelf --set-interpreter ${interpreter} $p || true
+                  fi
+                done
+
+                mkdir -p $out
+                cp -R * $out
+
+                runHook postInstall
+              '';
+            };
+
+          wrpc-aarch64-unknown-linux-gnu-fhs = mkFHS {
+            name = "wrpc-aarch64-unknown-linux-gnu-fhs";
+            src = packages.wrpc-aarch64-unknown-linux-gnu;
+            interpreter = interpreters.aarch64-unknown-linux-gnu;
+          };
+
+          wrpc-riscv64gc-unknown-linux-gnu-fhs = mkFHS {
+            name = "wrpc-riscv64gc-unknown-linux-gnu-fhs";
+            src = packages.wrpc-riscv64gc-unknown-linux-gnu;
+            interpreter = interpreters.riscv64gc-unknown-linux-gnu;
+          };
+
+          wrpc-x86_64-unknown-linux-gnu-fhs = mkFHS {
+            name = "wrpc-x86_64-unknown-linux-gnu-fhs";
+            src = packages.wrpc-x86_64-unknown-linux-gnu;
+            interpreter = interpreters.x86_64-unknown-linux-gnu;
+          };
+        in
+          packages
+          // {
+            inherit
+              wrpc-aarch64-unknown-linux-gnu-fhs
+              wrpc-riscv64gc-unknown-linux-gnu-fhs
+              wrpc-x86_64-unknown-linux-gnu-fhs
+              ;
+
+            rust = hostRustToolchain;
+          };
 
         withDevShells = {
           devShells,
