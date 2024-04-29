@@ -7,19 +7,24 @@ type Transmitter interface {
 }
 
 type Subscriber interface {
-	SubscribeBody(func(context.Context, []byte)) (func() error, error)
-	SubscribeBodyElement([]*uint32, chan<- error, func(context.Context, []uint32, []byte)) (func() error, error)
+	Subscribe(func(context.Context, []byte)) (func() error, error)
+	SubscribePath([]*uint32, chan<- error, func(context.Context, []uint32, []byte)) (func() error, error)
+}
+
+type ErrorSubscriber interface {
 	SubscribeError(func(context.Context, []byte)) (func() error, error)
 }
 
 type IncomingInvocation interface {
 	Subscriber
+	ErrorSubscriber
 
 	Accept(context.Context, []byte) error
 }
 
 type OutgoingInvocation interface {
 	Subscriber
+	ErrorSubscriber
 
 	Invoke(context.Context, []byte, func(context.Context, []byte)) (func() error, Transmitter, error)
 }

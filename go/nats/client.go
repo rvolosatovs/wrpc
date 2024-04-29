@@ -1,4 +1,4 @@
-package natswrpc
+package wrpcnats
 
 import (
 	"context"
@@ -140,7 +140,7 @@ func (c *Client) NewInvocation(instance string, name string) wrpc.OutgoingInvoca
 	}
 }
 
-func (c *OutgoingInvocation) SubscribeBody(f func(context.Context, []byte)) (func() error, error) {
+func (c *OutgoingInvocation) Subscribe(f func(context.Context, []byte)) (func() error, error) {
 	sub, err := c.conn.Subscribe(resultSubject(c.rx), func(m *nats.Msg) {
 		ctx := context.Background()
 		ctx = ContextWithHeader(ctx, m.Header)
@@ -152,7 +152,7 @@ func (c *OutgoingInvocation) SubscribeBody(f func(context.Context, []byte)) (fun
 	return sub.Unsubscribe, nil
 }
 
-func (c *OutgoingInvocation) SubscribeBodyElement(path []*uint32, errCh chan<- error, f func(context.Context, []uint32, []byte)) (func() error, error) {
+func (c *OutgoingInvocation) SubscribePath(path []*uint32, errCh chan<- error, f func(context.Context, []uint32, []byte)) (func() error, error) {
 	sub, err := subscribeElement(c.conn, resultSubject(c.rx), path, errCh, f)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe for results at path %v: %w", path, err)
@@ -192,7 +192,7 @@ func (c *OutgoingInvocation) Invoke(ctx context.Context, buf []byte, f func(cont
 
 type IncomingInvocation struct{ invocation }
 
-func (c *IncomingInvocation) SubscribeBody(f func(context.Context, []byte)) (func() error, error) {
+func (c *IncomingInvocation) Subscribe(f func(context.Context, []byte)) (func() error, error) {
 	sub, err := c.conn.Subscribe(paramSubject(c.rx), func(m *nats.Msg) {
 		ctx := context.Background()
 		ctx = ContextWithHeader(ctx, m.Header)
@@ -204,7 +204,7 @@ func (c *IncomingInvocation) SubscribeBody(f func(context.Context, []byte)) (fun
 	return sub.Unsubscribe, nil
 }
 
-func (c *IncomingInvocation) SubscribeBodyElement(path []*uint32, errCh chan<- error, f func(context.Context, []uint32, []byte)) (func() error, error) {
+func (c *IncomingInvocation) SubscribePath(path []*uint32, errCh chan<- error, f func(context.Context, []uint32, []byte)) (func() error, error) {
 	sub, err := subscribeElement(c.conn, paramSubject(c.rx), path, errCh, f)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe for parameters at path %v: %w", path, err)
@@ -281,7 +281,7 @@ func (c *Client) Serve(instance string, name string, f func(context.Context, []b
 		}
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to serve `wrpc:http/outgoing-handler.handle`: %w", err)
+		return nil, fmt.Errorf("failed to serve `%s` for instance `%s`: %w", name, instance, err)
 	}
 	return sub.Unsubscribe, nil
 }
