@@ -12,8 +12,8 @@ import (
 
 	server "github.com/bytecodealliance/wrpc/examples/go/complex-server/bindings"
 	"github.com/bytecodealliance/wrpc/examples/go/complex-server/bindings/exports/wrpc_examples/complex/resources"
-	wrpc "github.com/bytecodealliance/wrpc/go"
-	wrpcnats "github.com/bytecodealliance/wrpc/go/nats"
+	wrpc "gowrpc.lol/go"
+	wrpcnats "gowrpc.lol/go/nats"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 )

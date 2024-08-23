@@ -11,8 +11,8 @@ import (
 
 	server "github.com/bytecodealliance/wrpc/examples/go/streams-server/bindings"
 	"github.com/bytecodealliance/wrpc/examples/go/streams-server/bindings/exports/wrpc_examples/streams/handler"
-	wrpc "github.com/bytecodealliance/wrpc/go"
-	wrpcnats "github.com/bytecodealliance/wrpc/go/nats"
+	wrpc "gowrpc.lol/go"
+	wrpcnats "gowrpc.lol/go/nats"
 	"github.com/nats-io/nats.go"
 )
 

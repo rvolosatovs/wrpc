@@ -7,7 +7,7 @@ import (
 	binary "encoding/binary"
 	errors "errors"
 	fmt "fmt"
-	wrpc "github.com/bytecodealliance/wrpc/go"
+	wrpc "gowrpc.lol/go"
 	io "io"
 	slog "log/slog"
 	math "math"

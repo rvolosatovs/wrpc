@@ -1,4 +1,4 @@
-//go:generate $WIT_BINDGEN_WRPC go --world async-client --out-dir bindings/async_client --package github.com/bytecodealliance/wrpc/tests/go/bindings/async_client ../wit
+//go:generate $WIT_BINDGEN_WRPC go --world async-client --out-dir bindings/async_client --package gowrpc.lol/tests/go/bindings/async_client ../wit
 
 package integration_test
 
@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	wrpcnats "github.com/bytecodealliance/wrpc/go/nats"
-	integration "github.com/bytecodealliance/wrpc/tests/go"
-	"github.com/bytecodealliance/wrpc/tests/go/bindings/async_client/wrpc_test/integration/async"
-	"github.com/bytecodealliance/wrpc/tests/go/bindings/async_server"
-	"github.com/bytecodealliance/wrpc/tests/go/internal"
+	wrpcnats "gowrpc.lol/go/nats"
+	integration "gowrpc.lol/tests/go"
+	"gowrpc.lol/tests/go/bindings/async_client/wrpc_test/integration/async"
+	"gowrpc.lol/tests/go/bindings/async_server"
+	"gowrpc.lol/tests/go/internal"
 	"github.com/nats-io/nats.go"
 )
 

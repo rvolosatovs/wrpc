@@ -10,4 +10,4 @@ use (
 	./tests/go
 )
 
-replace github.com/bytecodealliance/wrpc/go v0.0.1 => ./go
+replace gowrpc.lol/go v0.0.1 => ./go

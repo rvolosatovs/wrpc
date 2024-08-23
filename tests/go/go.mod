@@ -1,12 +1,12 @@
-module github.com/bytecodealliance/wrpc/tests/go
+module gowrpc.lol/tests/go
 
 go 1.22.2
 
 require (
-	github.com/bytecodealliance/wrpc/go v0.0.1
 	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats-server/v2 v2.10.14
 	github.com/nats-io/nats.go v1.37.0
+	gowrpc.lol/go v0.0.1
 )
 
 require (
@@ -24,4 +24,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/bytecodealliance/wrpc/go v0.0.1 => ../../go
+replace gowrpc.lol/go v0.0.1 => ../../go

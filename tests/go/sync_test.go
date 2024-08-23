@@ -1,4 +1,4 @@
-//go:generate $WIT_BINDGEN_WRPC go --gofmt=false --world sync-client --out-dir bindings/sync_client --package github.com/bytecodealliance/wrpc/tests/go/bindings/sync_client ../wit
+//go:generate $WIT_BINDGEN_WRPC go --gofmt=false --world sync-client --out-dir bindings/sync_client --package gowrpc.lol/tests/go/bindings/sync_client ../wit
 
 package integration_test
 
@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	wrpc "github.com/bytecodealliance/wrpc/go"
-	wrpcnats "github.com/bytecodealliance/wrpc/go/nats"
-	integration "github.com/bytecodealliance/wrpc/tests/go"
-	"github.com/bytecodealliance/wrpc/tests/go/bindings/sync_client/foo"
-	"github.com/bytecodealliance/wrpc/tests/go/bindings/sync_client/wrpc_test/integration/sync"
-	"github.com/bytecodealliance/wrpc/tests/go/bindings/sync_server"
-	"github.com/bytecodealliance/wrpc/tests/go/internal"
+	wrpc "gowrpc.lol/go"
+	wrpcnats "gowrpc.lol/go/nats"
+	integration "gowrpc.lol/tests/go"
+	"gowrpc.lol/tests/go/bindings/sync_client/foo"
+	"gowrpc.lol/tests/go/bindings/sync_client/wrpc_test/integration/sync"
+	"gowrpc.lol/tests/go/bindings/sync_server"
+	"gowrpc.lol/tests/go/internal"
 	"github.com/nats-io/nats.go"
 )
 

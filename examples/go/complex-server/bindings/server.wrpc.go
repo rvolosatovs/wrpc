@@ -4,7 +4,7 @@ package server
 
 import (
 	exports__wrpc_examples__complex__resources "github.com/bytecodealliance/wrpc/examples/go/complex-server/bindings/exports/wrpc_examples/complex/resources"
-	wrpc "github.com/bytecodealliance/wrpc/go"
+	wrpc "gowrpc.lol/go"
 )
 
 func Serve(s wrpc.Server, h0 exports__wrpc_examples__complex__resources.Handler) (stop func() error, err error) {

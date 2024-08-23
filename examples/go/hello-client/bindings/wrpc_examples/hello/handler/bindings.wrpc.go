@@ -5,7 +5,7 @@ import (
 	context "context"
 	errors "errors"
 	fmt "fmt"
-	wrpc "github.com/bytecodealliance/wrpc/go"
+	wrpc "gowrpc.lol/go"
 	io "io"
 	slog "log/slog"
 	utf8 "unicode/utf8"

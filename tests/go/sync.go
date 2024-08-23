@@ -1,4 +1,4 @@
-//go:generate $WIT_BINDGEN_WRPC go --gofmt=false --world sync-server --out-dir bindings/sync_server --package github.com/bytecodealliance/wrpc/tests/go/bindings/sync_server ../wit
+//go:generate $WIT_BINDGEN_WRPC go --gofmt=false --world sync-server --out-dir bindings/sync_server --package gowrpc.lol/tests/go/bindings/sync_server ../wit
 
 package integration
 
@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	wrpc "github.com/bytecodealliance/wrpc/go"
-	"github.com/bytecodealliance/wrpc/tests/go/bindings/sync_server/exports/wrpc_test/integration/sync"
+	wrpc "gowrpc.lol/go"
+	"gowrpc.lol/tests/go/bindings/sync_server/exports/wrpc_test/integration/sync"
 )
 
 type SyncHandler struct{}

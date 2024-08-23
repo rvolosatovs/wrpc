@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/bytecodealliance/wrpc/examples/go/streams-client/bindings/wrpc_examples/streams/handler"
-	wrpcnats "github.com/bytecodealliance/wrpc/go/nats"
+	wrpcnats "gowrpc.lol/go/nats"
 	"github.com/nats-io/nats.go"
 )
 

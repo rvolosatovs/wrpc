@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	server "github.com/bytecodealliance/wrpc/examples/go/hello-server/bindings"
-	wrpcnats "github.com/bytecodealliance/wrpc/go/nats"
+	wrpcnats "gowrpc.lol/go/nats"
 	"github.com/nats-io/nats.go"
 )
 
