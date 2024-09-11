@@ -1,11 +1,11 @@
 use anyhow::{ensure, Context};
 use tokio::process::Command;
-use tracing::instrument;
+
 
 mod common;
 
 #[cfg(feature = "nats")]
-#[instrument(ret)]
+
 #[test_log::test(tokio::test(flavor = "multi_thread"))]
 async fn go_bindgen() -> anyhow::Result<()> {
     use core::time::Duration;
@@ -237,7 +237,7 @@ async fn go_bindgen() -> anyhow::Result<()> {
     .await
 }
 
-#[instrument(ret)]
+
 #[test_log::test(tokio::test(flavor = "multi_thread"))]
 async fn go() -> anyhow::Result<()> {
     let status = Command::new("go")

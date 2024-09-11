@@ -151,7 +151,7 @@ where
     type Error = wasmtime::Error;
 
     #[allow(clippy::too_many_lines)]
-    #[instrument(level = "trace", skip(self))]
+
     fn encode(&mut self, v: &Val, dst: &mut BytesMut) -> Result<(), Self::Error> {
         match (v, self.ty) {
             (Val::Bool(v), Type::Bool) => {
@@ -598,7 +598,7 @@ async fn read_flags(n: usize, r: &mut (impl AsyncRead + Unpin)) -> std::io::Resu
 }
 
 /// Read encoded value of type [`Type`] from an [`AsyncRead`] into a [`Val`]
-#[instrument(level = "trace", skip_all, fields(ty, path))]
+
 pub async fn read_value<T, R>(
     store: &mut impl AsContextMut<Data = T>,
     r: &mut Pin<&mut R>,
@@ -944,7 +944,7 @@ pub trait WrpcView: Send {
 }
 
 /// Polyfill [`types::ComponentItem`] in a [`LinkerInstance`] using [`wrpc_transport::Invoke`]
-#[instrument(level = "trace", skip_all)]
+
 pub fn link_item<V>(
     engine: &Engine,
     linker: &mut LinkerInstance<V>,
@@ -1003,7 +1003,7 @@ where
 }
 
 /// Polyfill [`types::ComponentInstance`] in a [`LinkerInstance`] using [`wrpc_transport::Invoke`]
-#[instrument(level = "trace", skip_all)]
+
 pub fn link_instance<V>(
     engine: &Engine,
     linker: &mut LinkerInstance<V>,
@@ -1034,7 +1034,7 @@ where
 }
 
 /// Polyfill [`types::ComponentFunc`] in a [`LinkerInstance`] using [`wrpc_transport::Invoke`]
-#[instrument(level = "trace", skip_all)]
+
 pub fn link_function<V>(
     linker: &mut LinkerInstance<V>,
     resources: impl Into<Arc<[ResourceType]>>,
@@ -1134,7 +1134,7 @@ where
                 }
                 Ok(())
             }
-            .instrument(span.clone()),
+
         )
     })
 }
@@ -1199,7 +1199,7 @@ where
 }
 
 /// Recursively iterates the component item type and collects all exported resource types
-#[instrument(level = "trace", skip_all)]
+
 pub fn collect_item_resources(
     engine: &Engine,
     ty: types::ComponentItem,
@@ -1219,7 +1219,7 @@ pub fn collect_item_resources(
 }
 
 /// Recursively iterates the component type and collects all exported resource types
-#[instrument(level = "trace", skip_all)]
+
 pub fn collect_instance_resources(
     engine: &Engine,
     ty: &types::ComponentInstance,
@@ -1231,7 +1231,7 @@ pub fn collect_instance_resources(
 }
 
 /// Recursively iterates the component type and collects all exported resource types
-#[instrument(level = "trace", skip_all)]
+
 pub fn collect_component_resources(
     engine: &Engine,
     ty: &types::Component,
@@ -1245,7 +1245,7 @@ pub fn collect_component_resources(
 pub trait ServeExt: wrpc_transport::Serve {
     /// Serve [`types::ComponentFunc`] from an [`InstancePre`] instantiating it on each call.
     /// This serving method does not support guest-exported resources.
-    #[instrument(level = "trace", skip(self, store, instance_pre))]
+
     fn serve_function<T>(
         &self,
         store: impl Fn() -> wasmtime::Store<T> + Send + 'static,
@@ -1317,7 +1317,7 @@ pub trait ServeExt: wrpc_transport::Serve {
                             )
                             .await
                         }
-                        .instrument(span.clone()),
+
                     ) as Pin<Box<dyn Future<Output = _> + Send + 'static>>,
                 )
             }))
@@ -1326,7 +1326,7 @@ pub trait ServeExt: wrpc_transport::Serve {
 
     /// Like [`Self::serve_function`], but with a shared `store` instance.
     /// This is required to allow for serving functions, which operate on guest-exported resources.
-    #[instrument(level = "trace", skip(self, store, instance, guest_resources))]
+
     fn serve_function_shared<T>(
         &self,
         store: Arc<Mutex<wasmtime::Store<T>>>,
@@ -1396,7 +1396,7 @@ pub trait ServeExt: wrpc_transport::Serve {
                             .await?;
                             Ok(())
                         }
-                        .instrument(span.clone()),
+
                     ) as Pin<Box<dyn Future<Output = _> + Send + 'static>>,
                 )
             }))

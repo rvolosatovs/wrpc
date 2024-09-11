@@ -41,7 +41,7 @@ impl tokio_util::codec::Decoder for Decoder {
     type Item = Frame;
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip_all)]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let path = self.path.take();
         let mut path = if let Some(path) = path {
@@ -148,7 +148,7 @@ pub struct Encoder;
 impl tokio_util::codec::Encoder<FrameRef<'_>> for Encoder {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip_all)]
+
     fn encode(
         &mut self,
         FrameRef { path, data }: FrameRef<'_>,
@@ -179,7 +179,7 @@ impl tokio_util::codec::Encoder<FrameRef<'_>> for Encoder {
 impl tokio_util::codec::Encoder<&Frame> for Encoder {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip_all)]
+
     fn encode(&mut self, frame: &Frame, dst: &mut BytesMut) -> Result<(), Self::Error> {
         self.encode(FrameRef::from(frame), dst)
     }

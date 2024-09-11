@@ -39,7 +39,7 @@ pub trait Serve: Sync {
 
 pub trait ServeExt: Serve {
     /// Serve function `func` from instance `instance` using typed `Params` and `Results`
-    #[instrument(level = "trace", skip(self, paths))]
+
     fn serve_values<Params, Results>(
         &self,
         instance: &str,
@@ -115,12 +115,12 @@ pub trait ServeExt: Serve {
                                     }
                                     Ok(())
                                 }
-                                .instrument(span),
+
                             ) as Pin<_>
                         },
                     ))
                 }
-                .instrument(span.clone())
+
             }))
         }
     }

@@ -18,6 +18,7 @@ use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio::sync::oneshot;
 use tokio::try_join;
 use tracing::{debug, instrument, trace, warn};
+
 use wrpc_transport::Index as _;
 
 pub const PROTOCOL: &str = "wrpc.0.0.1";
@@ -120,7 +121,6 @@ pub struct ByteSubscription(Subscriber);
 impl Stream for ByteSubscription {
     type Item = std::io::Result<Bytes>;
 
-    #[instrument(level = "trace", skip_all)]
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         match self.0.poll_next_unpin(cx) {
             Poll::Ready(Some(Message { payload, .. })) => Poll::Ready(Some(Ok(payload))),
@@ -185,7 +185,6 @@ impl SubscriberTree {
         matches!(self, SubscriberTree::Empty)
     }
 
-    #[instrument(level = "trace", skip_all)]
     fn take(&mut self, path: &[usize]) -> Option<Subscriber> {
         let Some((i, path)) = path.split_first() else {
             return match mem::take(self) {
@@ -228,7 +227,7 @@ impl SubscriberTree {
 
     /// Inserts `sub` under a `path` - returns `false` if it failed and `true` if it succeeded.
     /// Tree state after `false` is returned in undefined
-    #[instrument(level = "trace", skip_all)]
+
     fn insert(&mut self, path: &[Option<usize>], sub: Subscriber) -> bool {
         match self {
             Self::Empty => {
@@ -311,7 +310,6 @@ pub struct Reader {
 }
 
 impl wrpc_transport::Index<Self> for Reader {
-    #[instrument(level = "trace", skip(self))]
     fn index(&self, path: &[usize]) -> anyhow::Result<Self> {
         trace!("locking index tree");
         let mut nested = self
@@ -331,7 +329,6 @@ impl wrpc_transport::Index<Self> for Reader {
 }
 
 impl AsyncRead for Reader {
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -389,7 +386,6 @@ impl SubjectWriter {
 }
 
 impl wrpc_transport::Index<Self> for SubjectWriter {
-    #[instrument(level = "trace", skip(self))]
     fn index(&self, path: &[usize]) -> anyhow::Result<Self> {
         let tx = Subject::from(index_path(self.tx.as_str(), path));
         Ok(Self {
@@ -400,7 +396,6 @@ impl wrpc_transport::Index<Self> for SubjectWriter {
 }
 
 impl AsyncWrite for SubjectWriter {
-    #[instrument(level = "trace", skip_all, ret, fields(subject = self.tx.as_str(), buf = format!("{buf:02x?}")))]
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -440,7 +435,6 @@ impl AsyncWrite for SubjectWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret, fields(subject = self.tx.as_str()))]
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         trace!("flushing");
         self.nats
@@ -448,7 +442,6 @@ impl AsyncWrite for SubjectWriter {
             .map_err(|_| std::io::ErrorKind::BrokenPipe.into())
     }
 
-    #[instrument(level = "trace", skip_all, ret, fields(subject = self.tx.as_str()))]
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         trace!("writing empty buffer to shut down stream");
         ready!(self.as_mut().poll_write(cx, &[]))?;
@@ -485,7 +478,6 @@ impl RootParamWriter {
 }
 
 impl RootParamWriter {
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_active(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match &mut *self {
             Self::Corrupted => Poll::Ready(Err(corrupted_memory_error())),
@@ -585,7 +577,6 @@ impl RootParamWriter {
 }
 
 impl wrpc_transport::Index<IndexedParamWriter> for RootParamWriter {
-    #[instrument(level = "trace", skip(self))]
     fn index(&self, path: &[usize]) -> anyhow::Result<IndexedParamWriter> {
         match self {
             Self::Corrupted => Err(anyhow!(corrupted_memory_error())),
@@ -608,7 +599,6 @@ impl wrpc_transport::Index<IndexedParamWriter> for RootParamWriter {
 }
 
 impl AsyncWrite for RootParamWriter {
-    #[instrument(level = "trace", skip_all, ret, fields(buf = format!("{buf:02x?}")))]
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -626,7 +616,6 @@ impl AsyncWrite for RootParamWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match self.as_mut().poll_active(cx)? {
             Poll::Ready(()) => {
@@ -640,7 +629,6 @@ impl AsyncWrite for RootParamWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match self.as_mut().poll_active(cx)? {
             Poll::Ready(()) => {
@@ -667,7 +655,6 @@ pub enum IndexedParamWriter {
 }
 
 impl IndexedParamWriter {
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_active(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match &mut *self {
             Self::Corrupted => Poll::Ready(Err(corrupted_memory_error())),
@@ -702,7 +689,6 @@ impl IndexedParamWriter {
 }
 
 impl wrpc_transport::Index<Self> for IndexedParamWriter {
-    #[instrument(level = "trace", skip_all)]
     fn index(&self, path: &[usize]) -> anyhow::Result<Self> {
         match self {
             Self::Corrupted => Err(anyhow!(corrupted_memory_error())),
@@ -723,7 +709,6 @@ impl wrpc_transport::Index<Self> for IndexedParamWriter {
 }
 
 impl AsyncWrite for IndexedParamWriter {
-    #[instrument(level = "trace", skip_all, ret, fields(buf = format!("{buf:02x?}")))]
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -741,7 +726,6 @@ impl AsyncWrite for IndexedParamWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match self.as_mut().poll_active(cx)? {
             Poll::Ready(()) => {
@@ -755,7 +739,6 @@ impl AsyncWrite for IndexedParamWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match self.as_mut().poll_active(cx)? {
             Poll::Ready(()) => {
@@ -786,7 +769,6 @@ impl wrpc_transport::Index<Self> for ParamWriter {
 }
 
 impl AsyncWrite for ParamWriter {
-    #[instrument(level = "trace", skip_all, ret, fields(buf = format!("{buf:02x?}")))]
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -798,7 +780,6 @@ impl AsyncWrite for ParamWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match &mut *self {
             ParamWriter::Root(w) => pin!(w).poll_flush(cx),
@@ -806,7 +787,6 @@ impl AsyncWrite for ParamWriter {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         match &mut *self {
             ParamWriter::Root(w) => pin!(w).poll_shutdown(cx),
@@ -820,7 +800,6 @@ impl wrpc_transport::Invoke for Client {
     type Outgoing = ParamWriter;
     type Incoming = Reader;
 
-    #[instrument(level = "trace", skip(self, paths, params), fields(params = format!("{params:02x?}")))]
     async fn invoke<P: AsRef<[Option<usize>]> + Send + Sync>(
         &self,
         cx: Self::Context,
@@ -917,7 +896,6 @@ impl wrpc_transport::Serve for Client {
     type Outgoing = SubjectWriter;
     type Incoming = Reader;
 
-    #[instrument(level = "trace", skip(self, paths))]
     async fn serve(
         &self,
         instance: &str,

@@ -299,7 +299,6 @@ pub async fn serve_shared(
     pre: InstancePre<Ctx<wrpc_transport_nats::Client>>,
     guest_resources: Arc<[ResourceType]>,
 ) -> anyhow::Result<()> {
-    let span = Span::current();
     let instance = pre
         .instantiate_async(&mut store)
         .await
@@ -320,31 +319,28 @@ pub async fn serve_shared(
                         name,
                     )
                     .await?;
-                handlers.spawn(
-                    async move {
-                        let mut invocations = pin!(invocations);
-                        while let Some(invocation) = invocations.next().await {
-                            match invocation {
-                                Ok((headers, fut)) => {
-                                    info!(?headers, "serving root function invocation");
-                                    if let Err(err) = fut.await {
-                                        warn!(
-                                            ?headers,
-                                            ?err,
-                                            "failed to serve root function invocation"
-                                        );
-                                    } else {
-                                        info!("successfully served root function invocation");
-                                    }
+                handlers.spawn(async move {
+                    let mut invocations = pin!(invocations);
+                    while let Some(invocation) = invocations.next().await {
+                        match invocation {
+                            Ok((headers, fut)) => {
+                                info!(?headers, "serving root function invocation");
+                                if let Err(err) = fut.await {
+                                    warn!(
+                                        ?headers,
+                                        ?err,
+                                        "failed to serve root function invocation"
+                                    );
+                                } else {
+                                    info!("successfully served root function invocation");
                                 }
-                                Err(err) => {
-                                    error!(?err, "failed to accept root function invocation");
-                                }
+                            }
+                            Err(err) => {
+                                error!(?err, "failed to accept root function invocation");
                             }
                         }
                     }
-                    .instrument(span.clone()),
-                );
+                });
             }
             (_, types::ComponentItem::CoreFunc(_)) => {
                 warn!(name, "serving root core function exports not supported yet");
@@ -396,8 +392,7 @@ pub async fn serve_shared(
                                         }
                                     }
                                 }
-                            }
-                            .instrument(span.clone()));
+                            });
                         }
                         types::ComponentItem::CoreFunc(_) => {
                             warn!(

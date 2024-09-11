@@ -138,7 +138,7 @@ impl Server {
 }
 
 impl bindings::exports::wasi::keyvalue::store::HandlerBucket<Option<HeaderMap>> for Server {
-    #[instrument(level = "trace", skip(_cx), ret)]
+
     async fn get(
         &self,
         _cx: Option<HeaderMap>,
@@ -150,7 +150,7 @@ impl bindings::exports::wasi::keyvalue::store::HandlerBucket<Option<HeaderMap>> 
         Ok(Ok(bucket.get(&key).cloned()))
     }
 
-    #[instrument(level = "trace", skip(_cx), ret)]
+
     async fn set(
         &self,
         _cx: Option<HeaderMap>,
@@ -164,7 +164,7 @@ impl bindings::exports::wasi::keyvalue::store::HandlerBucket<Option<HeaderMap>> 
         Ok(Ok(()))
     }
 
-    #[instrument(level = "trace", skip(_cx), ret)]
+
     async fn delete(
         &self,
         _cx: Option<HeaderMap>,
@@ -177,7 +177,7 @@ impl bindings::exports::wasi::keyvalue::store::HandlerBucket<Option<HeaderMap>> 
         Ok(Ok(()))
     }
 
-    #[instrument(level = "trace", skip(_cx), ret)]
+
     async fn exists(
         &self,
         _cx: Option<HeaderMap>,
@@ -189,7 +189,7 @@ impl bindings::exports::wasi::keyvalue::store::HandlerBucket<Option<HeaderMap>> 
         Ok(Ok(bucket.contains_key(&key)))
     }
 
-    #[instrument(level = "trace", skip(_cx), ret)]
+
     async fn list_keys(
         &self,
         _cx: Option<HeaderMap>,
@@ -212,7 +212,7 @@ impl bindings::exports::wasi::keyvalue::store::HandlerBucket<Option<HeaderMap>> 
 
 impl bindings::exports::wasi::keyvalue::store::Handler<Option<HeaderMap>> for Server {
     // NOTE: Resource handle returned is just the `identifier` itself
-    #[instrument(level = "trace", skip(_cx), ret)]
+
     async fn open(
         &self,
         _cx: Option<HeaderMap>,

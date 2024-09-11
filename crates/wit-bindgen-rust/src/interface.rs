@@ -343,7 +343,7 @@ pub fn serve_interface<'a, T: {wrpc_transport}::Serve>(
             uwrite!(
                 self.src,
                 r#"
-                                let rx = rx.map({tracing}::Instrument::in_current_span).map({tokio}::spawn);
+                                let rx = rx.map({tokio}::spawn);
                                 {tracing}::trace!(instance = "{instance}", func = "{wit_name}", "calling handler");
                                 match {trait_name}::{name}(&handler, cx"#,
                 tokio = self.gen.tokio_path(),

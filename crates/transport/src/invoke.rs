@@ -86,7 +86,7 @@ impl<T: Invoke> Invoke for Timeout<'_, T> {
     type Outgoing = T::Outgoing;
     type Incoming = T::Incoming;
 
-    #[instrument(level = "trace", skip(self, cx, params, paths))]
+
     async fn invoke<P>(
         &self,
         cx: Self::Context,
@@ -118,7 +118,7 @@ impl<T: Invoke> Invoke for TimeoutOwned<T> {
     type Outgoing = T::Outgoing;
     type Incoming = T::Incoming;
 
-    #[instrument(level = "trace", skip(self, cx, params, paths))]
+
     async fn invoke<P>(
         &self,
         cx: Self::Context,
@@ -139,7 +139,7 @@ impl<T: Invoke> Invoke for TimeoutOwned<T> {
 
 pub trait InvokeExt: Invoke {
     /// Invoke function `func` on instance `instance` using typed `Params` and `Results`
-    #[instrument(level = "trace", skip(self, cx, params, paths))]
+
     fn invoke_values<P, Params, Results>(
         &self,
         cx: Self::Context,
@@ -185,7 +185,6 @@ pub trait InvokeExt: Invoke {
                             .await
                             .context("failed to write async parameters")
                     }
-                    .in_current_span(),
                 )
             });
 
@@ -245,7 +244,6 @@ pub trait InvokeExt: Invoke {
                         }
                         Ok(())
                     }
-                    .in_current_span(),
                 ),
             ))
         }
@@ -253,7 +251,7 @@ pub trait InvokeExt: Invoke {
 
     /// Invoke function `func` on instance `instance` using typed `Params` and `Results`
     /// This is like [`Self::invoke_values`], but it only results once all I/O is done
-    #[instrument(level = "trace", skip_all)]
+
     fn invoke_values_blocking<P, Params, Results>(
         &self,
         cx: Self::Context,

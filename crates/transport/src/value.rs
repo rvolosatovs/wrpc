@@ -326,7 +326,7 @@ where
     }
 }
 
-#[instrument(level = "trace", skip(w, deferred))]
+
 pub async fn handle_deferred<T, I>(
     w: Arc<T>,
     deferred: I,
@@ -352,7 +352,7 @@ where
 pub trait Encode<T>: Sized {
     type Encoder: tokio_util::codec::Encoder<Self> + Deferred<T> + Default + Send;
 
-    #[instrument(level = "trace", skip(self, enc))]
+
     fn encode(
         self,
         enc: &mut Self::Encoder,
@@ -363,7 +363,7 @@ pub trait Encode<T>: Sized {
         Ok(enc.take_deferred())
     }
 
-    #[instrument(level = "trace", skip(items, enc))]
+
     fn encode_iter_own<I>(
         items: I,
         enc: &mut Self::Encoder,
@@ -391,7 +391,7 @@ pub trait Encode<T>: Sized {
         }
     }
 
-    #[instrument(level = "trace", skip(items, enc))]
+
     fn encode_iter_ref<'a, I>(
         items: I,
         enc: &mut Self::Encoder,
@@ -420,7 +420,7 @@ pub trait Encode<T>: Sized {
         }
     }
 
-    #[instrument(level = "trace", skip(items, enc), fields(ty = "list"))]
+
     fn encode_list_own(
         items: Vec<Self>,
         enc: &mut Self::Encoder,
@@ -436,7 +436,7 @@ pub trait Encode<T>: Sized {
         Self::encode_iter_own(items, enc, dst, 0)
     }
 
-    #[instrument(level = "trace", skip(items, enc), fields(ty = "list"))]
+
     fn encode_list_ref<'a>(
         items: &'a [Self],
         enc: &mut Self::Encoder,
@@ -747,7 +747,7 @@ where
     type Item = Vec<T::Item>;
     type Error = T::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "list"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         if self.cap == 0 {
             let Some(len) = Leb128DecoderU32.decode(src)? else {
@@ -790,7 +790,7 @@ macro_rules! impl_copy_codec {
         impl<W> Encode<W> for $t {
             type Encoder = $c;
 
-            #[instrument(level = "trace", skip(items))]
+
             fn encode_iter_own<I>(
                 items: I,
                 enc: &mut Self::Encoder,
@@ -812,7 +812,7 @@ macro_rules! impl_copy_codec {
                 Ok(None)
             }
 
-            #[instrument(level = "trace", skip(items))]
+
             fn encode_iter_ref<'a, I>(
                 items: I,
                 enc: &mut Self::Encoder,
@@ -838,7 +838,7 @@ macro_rules! impl_copy_codec {
         impl<'b, W> Encode<W> for &'b $t {
             type Encoder = $c;
 
-            #[instrument(level = "trace", skip(items))]
+
             fn encode_iter_own<I>(
                 items: I,
                 enc: &mut Self::Encoder,
@@ -860,7 +860,7 @@ macro_rules! impl_copy_codec {
                 Ok(None)
             }
 
-            #[instrument(level = "trace", skip(items))]
+
             fn encode_iter_ref<'a, I>(
                 items: I,
                 enc: &mut Self::Encoder,
@@ -906,7 +906,7 @@ impl_copy_codec!(char, Utf8Codec);
 impl<T> Encode<T> for u8 {
     type Encoder = U8Codec;
 
-    #[instrument(level = "trace", skip(items))]
+
     fn encode_iter_own<I>(
         items: I,
         enc: &mut Self::Encoder,
@@ -923,7 +923,7 @@ impl<T> Encode<T> for u8 {
         Ok(None)
     }
 
-    #[instrument(level = "trace", skip(items))]
+
     fn encode_iter_ref<'a, I>(
         items: I,
         enc: &mut Self::Encoder,
@@ -940,7 +940,7 @@ impl<T> Encode<T> for u8 {
         Ok(None)
     }
 
-    #[instrument(level = "trace", skip(items), fields(ty = "list<u8>"))]
+
     fn encode_list_own(
         items: Vec<Self>,
         enc: &mut Self::Encoder,
@@ -951,7 +951,7 @@ impl<T> Encode<T> for u8 {
         Ok(None)
     }
 
-    #[instrument(level = "trace", skip(items), fields(ty = "list<u8>"))]
+
     fn encode_list_ref<'a>(
         items: &'a [Self],
         enc: &mut Self::Encoder,
@@ -968,7 +968,7 @@ impl<T> Encode<T> for u8 {
 impl<'b, T> Encode<T> for &'b u8 {
     type Encoder = U8Codec;
 
-    #[instrument(level = "trace", skip(items))]
+
     fn encode_iter_own<I>(
         items: I,
         enc: &mut Self::Encoder,
@@ -985,7 +985,7 @@ impl<'b, T> Encode<T> for &'b u8 {
         Ok(None)
     }
 
-    #[instrument(level = "trace", skip(items))]
+
     fn encode_iter_ref<'a, I>(
         items: I,
         enc: &mut Self::Encoder,
@@ -1012,7 +1012,7 @@ impl tokio_util::codec::Decoder for ListDecoderU8 {
     type Item = Vec<u8>;
     type Error = <CoreVecDecoderBytes as tokio_util::codec::Decoder>::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "list<u8>"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let Some(buf) = self.0.decode(src)? else {
             return Ok(None);
@@ -1067,7 +1067,7 @@ pub struct ResourceEncoder;
 impl<T: ?Sized> tokio_util::codec::Encoder<ResourceOwn<T>> for ResourceEncoder {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, item), ret, fields(ty = "own"))]
+
     fn encode(&mut self, item: ResourceOwn<T>, dst: &mut BytesMut) -> std::io::Result<()> {
         CoreVecEncoderBytes.encode(item.repr, dst)
     }
@@ -1076,7 +1076,7 @@ impl<T: ?Sized> tokio_util::codec::Encoder<ResourceOwn<T>> for ResourceEncoder {
 impl<T: ?Sized> tokio_util::codec::Encoder<&ResourceOwn<T>> for ResourceEncoder {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, item), ret, fields(ty = "own"))]
+
     fn encode(&mut self, item: &ResourceOwn<T>, dst: &mut BytesMut) -> std::io::Result<()> {
         CoreVecEncoderBytes.encode(&item.repr, dst)
     }
@@ -1093,7 +1093,7 @@ impl<T: ?Sized, W> Encode<W> for &ResourceOwn<T> {
 impl<T: ?Sized> tokio_util::codec::Encoder<ResourceBorrow<T>> for ResourceEncoder {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, item), ret, fields(ty = "borrow"))]
+
     fn encode(&mut self, item: ResourceBorrow<T>, dst: &mut BytesMut) -> std::io::Result<()> {
         CoreVecEncoderBytes.encode(item.repr, dst)
     }
@@ -1102,7 +1102,7 @@ impl<T: ?Sized> tokio_util::codec::Encoder<ResourceBorrow<T>> for ResourceEncode
 impl<T: ?Sized> tokio_util::codec::Encoder<&ResourceBorrow<T>> for ResourceEncoder {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, item), ret, fields(ty = "borrow"))]
+
     fn encode(&mut self, item: &ResourceBorrow<T>, dst: &mut BytesMut) -> std::io::Result<()> {
         CoreVecEncoderBytes.encode(&item.repr, dst)
     }
@@ -1153,7 +1153,7 @@ impl<T: ?Sized> tokio_util::codec::Decoder for ResourceBorrowDecoder<T> {
     type Item = ResourceBorrow<T>;
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "borrow"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let repr = self.dec.decode(src)?;
         Ok(repr.map(Self::Item::from))
@@ -1197,7 +1197,7 @@ impl<T: ?Sized> tokio_util::codec::Decoder for ResourceOwnDecoder<T> {
     type Item = ResourceOwn<T>;
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "own"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let repr = self.dec.decode(src)?;
         Ok(repr.map(Self::Item::from))
@@ -1211,7 +1211,7 @@ pub struct UnitCodec;
 impl tokio_util::codec::Encoder<()> for UnitCodec {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self), ret)]
+
     fn encode(&mut self, (): (), dst: &mut BytesMut) -> std::io::Result<()> {
         Ok(())
     }
@@ -1220,7 +1220,7 @@ impl tokio_util::codec::Encoder<()> for UnitCodec {
 impl tokio_util::codec::Encoder<&()> for UnitCodec {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self), ret)]
+
     fn encode(&mut self, (): &(), dst: &mut BytesMut) -> std::io::Result<()> {
         Ok(())
     }
@@ -1230,7 +1230,7 @@ impl tokio_util::codec::Decoder for UnitCodec {
     type Item = ();
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         Ok(Some(()))
     }
@@ -1487,7 +1487,7 @@ where
 {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, item), fields(ty = "future"))]
+
     fn encode(&mut self, item: Fut, dst: &mut BytesMut) -> std::io::Result<()> {
         // TODO: Check if future is resolved
         dst.reserve(1);
@@ -1563,7 +1563,7 @@ where
     type Item = Pin<Box<dyn Future<Output = T> + Send>>;
     type Error = <T::Decoder as tokio_util::codec::Decoder>::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "future"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let Some(item) = self.dec.decode(src)? else {
             return Ok(None);
@@ -1647,7 +1647,7 @@ where
 {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, items), fields(ty = "stream"))]
+
     fn encode(&mut self, mut items: S, dst: &mut BytesMut) -> std::io::Result<()> {
         // TODO: Check if stream is resolved
         dst.reserve(1);
@@ -1744,7 +1744,7 @@ where
 {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, items), fields(ty = "stream<u8>"))]
+
     fn encode(&mut self, mut items: S, dst: &mut BytesMut) -> std::io::Result<()> {
         // TODO: Check if reader is resolved
         dst.reserve(1);
@@ -1811,7 +1811,7 @@ where
 {
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self, items), fields(ty = "stream<u8>"))]
+
     fn encode(&mut self, mut items: S, dst: &mut BytesMut) -> std::io::Result<()> {
         // TODO: Check if reader is resolved
         dst.reserve(1);
@@ -1944,7 +1944,7 @@ where
     }
 }
 
-#[instrument(level = "trace", skip(dec, r, tx), ret)]
+
 async fn handle_deferred_stream<C, T, R>(
     dec: C,
     r: Arc<R>,
@@ -2014,7 +2014,7 @@ where
     type Item = Pin<Box<dyn Stream<Item = Vec<T>> + Send>>;
     type Error = <<T as Decode<R>>::ListDecoder as tokio_util::codec::Decoder>::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "stream"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let Some(chunk) = self.dec.decode(src)? else {
             return Ok(None);
@@ -2074,7 +2074,7 @@ where
     type Item = Pin<Box<dyn Stream<Item = Bytes> + Send>>;
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "stream<u8>"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let Some(chunk) = self.dec.decode(src)? else {
             return Ok(None);
@@ -2147,7 +2147,7 @@ where
     type Item = Pin<Box<dyn AsyncRead + Send>>;
     type Error = std::io::Error;
 
-    #[instrument(level = "trace", skip(self), fields(ty = "stream<u8>"))]
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         let Some(chunk) = self.dec.decode(src)? else {
             return Ok(None);

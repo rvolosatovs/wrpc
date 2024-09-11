@@ -134,7 +134,7 @@ impl<P: AsRef<[Option<usize>]>> FromIterator<P> for IndexTree {
 }
 
 impl IndexTree {
-    #[instrument(level = "trace", skip(self))]
+
     fn take_rx(&mut self, path: &[usize]) -> Option<oneshot::Receiver<RecvStream>> {
         let Some((i, path)) = path.split_first() else {
             return match self {
@@ -168,7 +168,7 @@ impl IndexTree {
         }
     }
 
-    #[instrument(level = "trace", skip(self))]
+
     fn take_tx(&mut self, path: &[usize]) -> Option<oneshot::Sender<RecvStream>> {
         let Some((i, path)) = path.split_first() else {
             return match self {
@@ -204,7 +204,7 @@ impl IndexTree {
 
     /// Inserts `sender` and `receiver` under a `path` - returns `false` if it failed and `true` if it succeeded.
     /// Tree state after `false` is returned is undefined
-    #[instrument(level = "trace", skip(self, sender, receiver), ret)]
+
     fn insert(
         &mut self,
         path: &[Option<usize>],
@@ -380,7 +380,7 @@ pin_project! {
 }
 
 impl wrpc_transport::Index<Self> for Incoming {
-    #[instrument(level = "trace", skip(self))]
+
     fn index(&self, path: &[usize]) -> anyhow::Result<Self> {
         match self {
             Self::Accepting {
@@ -423,7 +423,7 @@ impl wrpc_transport::Index<Self> for Incoming {
 }
 
 impl AsyncRead for Incoming {
-    #[instrument(level = "trace", skip_all, ret)]
+
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -480,7 +480,7 @@ pin_project! {
 }
 
 impl wrpc_transport::Index<Self> for Outgoing {
-    #[instrument(level = "trace", skip(self))]
+
     fn index(&self, path: &[usize]) -> anyhow::Result<Self> {
         let mut header = BytesMut::with_capacity(path.len().saturating_add(5));
         let depth = path.len();
@@ -534,7 +534,7 @@ fn poll_write_header(
 }
 
 impl Outgoing {
-    #[instrument(level = "trace", skip_all, ret)]
+
     fn poll_flush_header(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -569,7 +569,7 @@ fn corrupted_memory_error() -> std::io::Error {
 }
 
 impl AsyncWrite for Outgoing {
-    #[instrument(level = "trace", skip_all, ret, fields(buf = format!("{buf:02x?}")))]
+
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -585,7 +585,7 @@ impl AsyncWrite for Outgoing {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
+
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         ready!(self.as_mut().poll_flush_header(cx))?;
         match self.as_mut().project() {
@@ -597,7 +597,7 @@ impl AsyncWrite for Outgoing {
         }
     }
 
-    #[instrument(level = "trace", skip_all, ret)]
+
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         ready!(self.as_mut().poll_flush_header(cx))?;
         match self.as_mut().project() {
@@ -674,7 +674,7 @@ impl wrpc_transport::Invoke for Client {
     type Outgoing = Outgoing;
     type Incoming = Incoming;
 
-    #[instrument(level = "trace", skip(self, paths, params), fields(params = format!("{params:02x?}")))]
+
     async fn invoke<P>(
         &self,
         cx: Self::Context,
@@ -727,7 +727,7 @@ impl wrpc_transport::Invoke for Client {
     }
 }
 
-#[instrument(level = "trace", skip_all)]
+
 async fn serve_connection(
     conn: Connection,
     paths: &[impl AsRef<[Option<usize>]>],
@@ -770,7 +770,7 @@ impl wrpc_transport::Serve for Server {
     type Outgoing = Outgoing;
     type Incoming = Incoming;
 
-    #[instrument(level = "trace", skip(self, paths))]
+
     async fn serve(
         &self,
         instance: &str,
@@ -798,7 +798,7 @@ impl wrpc_transport::Serve for Server {
                 let (tx, rx) = serve_connection(conn, &paths).await?;
                 Ok(((), tx, rx))
             }
-            .instrument(span.clone())
+
         }))
     }
 }
