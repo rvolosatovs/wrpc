@@ -118,6 +118,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "ants"
+version = "0.1.0-alpha.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb36d60e7b52fc628ca3bf201426afc33ac3d02a0a1a0e0adf4fdfa263b39eef"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "futures",
+ "memchr",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4139,6 +4156,23 @@ dependencies = [
  "tracing",
  "wasi 0.13.3+wasi-0.2.2",
  "wasm-tokio",
+]
+
+[[package]]
+name = "wrpc-transport-ants"
+version = "0.1.0-alpha.7"
+dependencies = [
+ "ants",
+ "anyhow",
+ "bytes",
+ "futures",
+ "nuid",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "wasm-tokio",
+ "wrpc-transport",
 ]
 
 [[package]]

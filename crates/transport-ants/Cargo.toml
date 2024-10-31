@@ -1,0 +1,23 @@
+[package]
+name = "wrpc-transport-ants"
+version = "0.1.0-alpha.7"
+description = "wRPC NATS.io transport via `ants`"
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ants = { workspace = true }
+anyhow = { workspace = true, features = ["std"] }
+bytes = { workspace = true }
+futures = { workspace = true, features = ["async-await"] }
+nuid = { workspace = true }
+tokio = { workspace = true, features = ["io-util", "rt-multi-thread"] }
+tokio-stream = { workspace = true, features = ["sync"] }
+tokio-util = { workspace = true, features = ["codec", "io"] }
+tracing = { workspace = true, features = ["attributes"] }
+wasm-tokio = { workspace = true }
+wrpc-transport = { workspace = true }
