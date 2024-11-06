@@ -57,4 +57,5 @@ wrpc-transport-quic = { workspace = true }
 wrpc-transport-web = { workspace = true }
 wrpc-wasi-keyvalue = { workspace = true }
 wrpc-wasi-keyvalue-mem = { workspace = true }
+wrpc-wasi-keyvalue-redis = { workspace = true }
 wtransport = { workspace = true, features = ["self-signed"] }

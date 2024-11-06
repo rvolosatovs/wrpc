@@ -78,6 +78,7 @@ impl ServerCertVerifier for Insecure {
 #[derive(Clone, Debug)]
 enum Bucket {
     Mem(ResourceOwn<store::Bucket>),
+    Redis(ResourceOwn<store::Bucket>),
     Nats(
         ResourceOwn<wrpc_wasi_keyvalue::wasi::keyvalue::store::Bucket>,
         wrpc_transport_nats::Client,
@@ -101,10 +102,11 @@ enum Bucket {
     ),
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 struct Handler {
     buckets: Arc<RwLock<HashMap<Bytes, Bucket>>>,
     mem: wrpc_wasi_keyvalue_mem::Handler,
+    redis: wrpc_wasi_keyvalue_redis::Handler,
 }
 
 impl Handler {
@@ -144,7 +146,7 @@ fn client_tls_config() -> rustls::ClientConfig {
 }
 
 impl<C: Send + Sync> store::Handler<C> for Handler {
-    #[instrument(level = "trace", skip(cx), ret(level = "trace"))]
+    #[instrument(level = "trace", skip(self, cx), ret(level = "trace"))]
     async fn open(
         &self,
         cx: C,
@@ -161,12 +163,18 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
             buckets.insert(id.clone(), Bucket::Mem(bucket));
             return Ok(Ok(ResourceOwn::from(id)));
         }
-        let (url, identifier) = identifier.split_once(';').unwrap_or((&identifier, ""));
+        let (url, suffix) = identifier.split_once(';').unwrap_or((&identifier, ""));
         let mut url = match Url::parse(url) {
             Ok(url) => url,
             Err(err) => return Ok(Err(store::Error::Other(err.to_string()))),
         };
         let bucket = match url.scheme() {
+            "redis" | "rediss" | "redis+sentinel" | "rediss+sentinel" => {
+                match self.redis.open(cx, identifier).await? {
+                    Ok(bucket) => Bucket::Redis(bucket),
+                    Err(err) => return Ok(Err(err)),
+                }
+            }
             "wrpc+nats" => {
                 let nats = match async_nats::connect_with_options(
                     url.authority(),
@@ -188,9 +196,7 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
                     Ok(wrpc) => wrpc,
                     Err(err) => return Ok(Err(store::Error::Other(format!("{err:#}")))),
                 };
-                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, None, &identifier)
-                    .await?
-                {
+                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, None, &suffix).await? {
                     Ok(bucket) => Bucket::Nats(bucket, wrpc),
                     Err(err) => return Ok(Err(err.into())),
                 }
@@ -225,9 +231,7 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
                     Err(err) => return Ok(Err(store::Error::Other(format!("{err:#}")))),
                 };
                 let wrpc = wrpc_transport_quic::Client::from(conn);
-                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &identifier)
-                    .await?
-                {
+                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &suffix).await? {
                     Ok(bucket) => Bucket::Quic(bucket, wrpc),
                     Err(err) => return Ok(Err(err.into())),
                 }
@@ -238,9 +242,7 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
                     Err(err) => return Ok(Err(err)),
                 };
                 let wrpc = wrpc_transport::frame::tcp::Client::from(addr);
-                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &identifier)
-                    .await?
-                {
+                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &suffix).await? {
                     Ok(bucket) => Bucket::Tcp(bucket, wrpc),
                     Err(err) => return Ok(Err(err.into())),
                 }
@@ -256,9 +258,7 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
                     )));
                 };
                 let wrpc = wrpc_transport::frame::unix::Client::from(path);
-                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &identifier)
-                    .await?
-                {
+                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &suffix).await? {
                     Ok(bucket) => Bucket::Unix(bucket, wrpc),
                     Err(err) => return Ok(Err(err.into())),
                 }
@@ -288,9 +288,7 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
                     Err(err) => return Ok(Err(store::Error::Other(format!("{err:#}")))),
                 };
                 let wrpc = wrpc_transport_web::Client::from(conn);
-                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &identifier)
-                    .await?
-                {
+                match wrpc_wasi_keyvalue::wasi::keyvalue::store::open(&wrpc, (), &suffix).await? {
                     Ok(bucket) => Bucket::Web(bucket, wrpc),
                     Err(err) => return Ok(Err(err.into())),
                 }
@@ -310,7 +308,7 @@ impl<C: Send + Sync> store::Handler<C> for Handler {
 }
 
 impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
-    #[instrument(level = "trace", skip(cx), ret(level = "trace"))]
+    #[instrument(level = "trace", skip(self, cx), ret(level = "trace"))]
     async fn get(
         &self,
         cx: C,
@@ -319,6 +317,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
     ) -> anyhow::Result<Result<Option<Bytes>>> {
         let res = match self.bucket(bucket).await? {
             Bucket::Mem(bucket) => return self.mem.get(cx, bucket.as_borrow(), key).await,
+            Bucket::Redis(bucket) => return self.redis.get(cx, bucket.as_borrow(), key).await,
             Bucket::Nats(bucket, wrpc) => {
                 wrpc_wasi_keyvalue::wasi::keyvalue::store::Bucket::get(
                     &wrpc,
@@ -372,7 +371,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
         }
     }
 
-    #[instrument(level = "trace", skip(cx), ret(level = "trace"))]
+    #[instrument(level = "trace", skip(self, cx), ret(level = "trace"))]
     async fn set(
         &self,
         cx: C,
@@ -382,6 +381,9 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
     ) -> anyhow::Result<Result<()>> {
         let res = match self.bucket(bucket).await? {
             Bucket::Mem(bucket) => return self.mem.set(cx, bucket.as_borrow(), key, value).await,
+            Bucket::Redis(bucket) => {
+                return self.redis.set(cx, bucket.as_borrow(), key, value).await
+            }
             Bucket::Nats(bucket, wrpc) => {
                 wrpc_wasi_keyvalue::wasi::keyvalue::store::Bucket::set(
                     &wrpc,
@@ -440,7 +442,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
         }
     }
 
-    #[instrument(level = "trace", skip(cx), ret(level = "trace"))]
+    #[instrument(level = "trace", skip(self, cx), ret(level = "trace"))]
     async fn delete(
         &self,
         cx: C,
@@ -449,6 +451,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
     ) -> anyhow::Result<Result<()>> {
         let res = match self.bucket(bucket).await? {
             Bucket::Mem(bucket) => return self.mem.delete(cx, bucket.as_borrow(), key).await,
+            Bucket::Redis(bucket) => return self.redis.delete(cx, bucket.as_borrow(), key).await,
             Bucket::Nats(bucket, wrpc) => {
                 wrpc_wasi_keyvalue::wasi::keyvalue::store::Bucket::delete(
                     &wrpc,
@@ -502,7 +505,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
         }
     }
 
-    #[instrument(level = "trace", skip(cx), ret(level = "trace"))]
+    #[instrument(level = "trace", skip(self, cx), ret(level = "trace"))]
     async fn exists(
         &self,
         cx: C,
@@ -511,6 +514,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
     ) -> anyhow::Result<Result<bool>> {
         let res = match self.bucket(bucket).await? {
             Bucket::Mem(bucket) => return self.mem.exists(cx, bucket.as_borrow(), key).await,
+            Bucket::Redis(bucket) => return self.redis.exists(cx, bucket.as_borrow(), key).await,
             Bucket::Nats(bucket, wrpc) => {
                 wrpc_wasi_keyvalue::wasi::keyvalue::store::Bucket::exists(
                     &wrpc,
@@ -564,7 +568,7 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
         }
     }
 
-    #[instrument(level = "trace", skip(cx), ret(level = "trace"))]
+    #[instrument(level = "trace", skip(self, cx), ret(level = "trace"))]
     async fn list_keys(
         &self,
         cx: C,
@@ -573,6 +577,9 @@ impl<C: Send + Sync> store::HandlerBucket<C> for Handler {
     ) -> anyhow::Result<Result<store::KeyResponse>> {
         let res = match self.bucket(bucket).await? {
             Bucket::Mem(bucket) => return self.mem.list_keys(cx, bucket.as_borrow(), cursor).await,
+            Bucket::Redis(bucket) => {
+                return self.redis.list_keys(cx, bucket.as_borrow(), cursor).await
+            }
             Bucket::Nats(bucket, wrpc) => {
                 wrpc_wasi_keyvalue::wasi::keyvalue::store::Bucket::list_keys(
                     &wrpc,

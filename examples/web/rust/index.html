@@ -32,7 +32,7 @@
             } else if (conn === 'nats') {
                 let addr = obj['nats-addr'];
                 if (addr == null || addr === '') {
-                    alert("NATS.io server URL must be set");
+                    alert("NATS.io server address must be set");
                     return
                 }
                 identifier = 'wrpc+nats://' + addr;
@@ -46,6 +46,13 @@
                 if (bucket != null && bucket != '') {
                     identifier = identifier + ";" + bucket;
                 }
+            } else if (conn === 'redis') {
+                let url = obj['redis-url'];
+                if (url == null || url === '') {
+                    alert("Redis URL must be set");
+                    return
+                }
+                identifier = url;
             } else if (conn === 'quic') {
                 let addr = obj.addr;
                 if (addr == null || addr === '') {
@@ -318,11 +325,12 @@
             <div class="select">
                 <select id="connection" form="settings" name="connection">
                     <option value="mem">In-memory</option>
-                    <option value="nats">NATS.io</option>
-                    <option value="quic">QUIC</option>
-                    <option value="tcp">TCP</option>
-                    <option value="uds">Unix domain sockets</option>
-                    <option value="web">WebTransport</option>
+                    <option value="redis">Redis</option>
+                    <option value="nats">wRPC/NATS.io</option>
+                    <option value="quic">wRPC/QUIC</option>
+                    <option value="tcp">wRPC/TCP</option>
+                    <option value="uds">wRPC/Unix domain sockets</option>
+                    <option value="web">wRPC/WebTransport</option>
                 </select>
             </div>
         </div>
@@ -349,6 +357,15 @@
             </template>
 
             <template class="form-fields" data-option="mem">
+            </template>
+
+            <template class="form-fields" data-option="redis">
+                <div class="field">
+                    <label class="label">Redis server URL</label>
+                    <div class="control">
+                        <input class="input" type="text" name="redis-url" placeholder="redis://localhost:6379" value="redis://localhost:6379">
+                    </div>
+                </div>
             </template>
 
             <template class="form-fields" data-option="nats">

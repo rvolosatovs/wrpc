@@ -4229,6 +4229,7 @@ dependencies = [
  "wrpc-transport-web",
  "wrpc-wasi-keyvalue",
  "wrpc-wasi-keyvalue-mem",
+ "wrpc-wasi-keyvalue-redis",
  "wtransport",
 ]
 
