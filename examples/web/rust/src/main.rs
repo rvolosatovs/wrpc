@@ -1,4 +1,4 @@
-use core::net::{Ipv6Addr, SocketAddr};
+use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use core::pin::pin;
 use core::time::Duration;
 
@@ -662,7 +662,7 @@ async fn main() -> anyhow::Result<()> {
 
     let ep = Endpoint::server(
         ServerConfig::builder()
-            .with_bind_default(0)
+            .with_bind_config(wtransport::config::IpBindConfig::LocalV4, 5051)
             .with_identity(id)
             .keep_alive_interval(Some(Duration::from_secs(3)))
             .build(),
